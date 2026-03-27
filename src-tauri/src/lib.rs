@@ -9,6 +9,11 @@ pub struct AlarmData {
 }
 
 #[tauri::command]
+fn close_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
+#[tauri::command]
 fn get_alarm_data() -> AlarmData {
     let mut alarm_id = String::new();
     let args: Vec<String> = env::args().collect();
@@ -79,7 +84,7 @@ fn get_alarm_data() -> AlarmData {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_alarm_data])
+        .invoke_handler(tauri::generate_handler![get_alarm_data, close_app])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
