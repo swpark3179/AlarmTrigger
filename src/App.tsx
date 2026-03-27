@@ -1,50 +1,55 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import MarkdownViewer from "./components/MarkdownViewer";
+import "./index.css";
+
+interface AlarmData {
+  title: string;
+  content: string;
+}
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const [data, setData] = useState<AlarmData | null>(null);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const result: AlarmData = await invoke("get_alarm_data");
+        setData(result);
+      } catch (error) {
+        console.error("Failed to fetch alarm data:", error);
+        setData({ title: "오류", content: "알람 데이터를 불러오지 못했습니다." });
+      }
+    }
+    fetchData();
+  }, []);
+
+  const handleClose = async () => {
+    const appWindow = getCurrentWindow();
+    await appWindow.close();
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="app-container">
+      <div data-tauri-drag-region className="titlebar"></div>
+      
+      <h2 className="title">{data ? data.title : "로딩 중..."}</h2>
+      
+      <div className="content-box">
+        {data ? (
+          <MarkdownViewer content={data.content || "표시할 내용이 없습니다."} />
+        ) : (
+          <div style={{ textAlign: "center", color: "#64748b" }}>데이터를 불러오는 중...</div>
+        )}
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      <div className="footer">
+        <button className="confirm-btn" onClick={handleClose}>
+          확인
+        </button>
+      </div>
+    </div>
   );
 }
 
