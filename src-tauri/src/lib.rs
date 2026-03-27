@@ -26,17 +26,31 @@ fn get_alarm_data() -> AlarmData {
     if let Some(mut home_dir) = dirs::home_dir() {
         home_dir.push(".alarm");
 
-        // Read alarm.json
-        let json_path = home_dir.join("alarm.json");
+        // Read alarms.json
+        let json_path = home_dir.join("alarms.json");
         if let Ok(json_str) = fs::read_to_string(&json_path) {
             if let Ok(items) = serde_json::from_str::<Vec<serde_json::Value>>(&json_str) {
                 for item in items {
                     if let Some(obj) = item.as_object() {
                         if let Some(t) = obj.get("title").and_then(|v| v.as_str()) {
-                            if let Some(id) = obj.get("id").and_then(|v| v.as_str()) {
-                                if id == alarm_id {
-                                    title = t.to_string();
-                                    break;
+                            if let Some(id_val) = obj.get("id") {
+                                let id_str = if let Some(s) = id_val.as_str() {
+                                    Some(s.to_string())
+                                } else if let Some(n) = id_val.as_number() {
+                                    Some(n.to_string())
+                                } else {
+                                    None
+                                };
+
+                                if let Some(id) = id_str {
+                                    if id == alarm_id {
+                                        title = t.to_string();
+                                        break;
+                                    }
+                                } else {
+                                    if title == "제목없음" {
+                                        title = t.to_string();
+                                    }
                                 }
                             } else {
                                 if title == "제목없음" {
