@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import MarkdownViewer from "./components/MarkdownViewer";
 import "./index.css";
 
@@ -26,8 +25,7 @@ function App() {
   }, []);
 
   const handleClose = async () => {
-    const appWindow = getCurrentWindow();
-    await appWindow.close();
+    await invoke("close_app");
   };
 
   return (
