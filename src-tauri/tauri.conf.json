@@ -17,8 +17,7 @@
         "height": 600,
         "alwaysOnTop": true,
         "center": true,
-        "decorations": false,
-        "transparent": true
+        "resizable": true
       }
     ],
     "security": {

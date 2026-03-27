@@ -32,8 +32,6 @@ function App() {
 
   return (
     <div className="app-container">
-      <div data-tauri-drag-region className="titlebar"></div>
-      
       <h2 className="title">{data ? data.title : "로딩 중..."}</h2>
       
       <div className="content-box">
