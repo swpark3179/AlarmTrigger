@@ -1,0 +1,3 @@
+## 2024-05-18 - Making Scrollable Areas Focusable
+**Learning:** In React/Tauri applications where a custom scrollable container (`overflow-y: auto`) is used to display content (like a Markdown viewer), it is crucial to make the container itself focusable using `tabIndex={0}` and add a clear `:focus-visible` state. Without this, keyboard users cannot scroll the content if there are no interactive elements inside it. Assigning it a `role="region"` and an `aria-label` also ensures screen readers announce the area correctly.
+**Action:** Always verify if a container with `overflow: auto/scroll` needs to be in the tab order for keyboard navigation, and style its `:focus-visible` state cleanly to match the design system.

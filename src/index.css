@@ -88,6 +88,13 @@ h2.title {
   margin-bottom: 20px;
   user-select: text;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  outline: none;
+}
+
+.content-box:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(94, 129, 172, 0.3), inset 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .content-box::-webkit-scrollbar { width: 8px; }
@@ -128,6 +135,10 @@ button.confirm-btn:hover {
 button.confirm-btn:active {
   transform: translateY(0);
   box-shadow: none;
+}
+button.confirm-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent);
 }
 
 /* ── Markdown Body ── */

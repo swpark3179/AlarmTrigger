@@ -29,23 +29,28 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      <h2 className="title">{data ? data.title : "로딩 중..."}</h2>
+    <main className="app-container">
+      <h2 className="title" aria-live="polite">{data ? data.title : "로딩 중..."}</h2>
       
-      <div className="content-box">
+      <div
+        className="content-box"
+        tabIndex={0}
+        role="region"
+        aria-label="알람 내용"
+      >
         {data ? (
           <MarkdownViewer content={data.content || "표시할 내용이 없습니다."} />
         ) : (
-          <div style={{ textAlign: "center", color: "#64748b" }}>데이터를 불러오는 중...</div>
+          <div style={{ textAlign: "center", color: "#64748b" }} aria-live="polite">데이터를 불러오는 중...</div>
         )}
       </div>
 
-      <div className="footer">
+      <footer className="footer">
         <button className="confirm-btn" onClick={handleClose}>
           확인
         </button>
-      </div>
-    </div>
+      </footer>
+    </main>
   );
 }
 
