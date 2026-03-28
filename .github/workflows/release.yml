@@ -31,12 +31,15 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app
-        run: npm run tauri build -- --target x86_64-pc-windows-gnu
+        run: npm run tauri build -- --target x86_64-pc-windows-gnu --no-bundle
+
+      - name: Rename executable
+        run: mv src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger.exe src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger-standalone.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger.exe
+          files: src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger-standalone.exe
           body: |
             ## 🚀 alarm-trigger 릴리스
 
