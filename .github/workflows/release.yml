@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.0.1)'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -39,14 +45,17 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
           files: src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger-standalone.exe
           body: |
-            ## 🚀 alarm-trigger 릴리스
+            ## 🚀 alarm-trigger 프로그램 개요
 
-            이 릴리스는 Windows 전용 실행 파일(.exe)로 제공됩니다. 다운로드 후 설치 없이 바로 실행하여 사용할 수 있습니다.
+            이 프로그램은 지정된 시간에 알람을 울리고, 마크다운으로 작성된 알람 내용을 화면에 띄워주는 편리한 유틸리티입니다.
+
+            이 릴리스는 설치 과정이 필요 없는 Windows 전용 단일 실행 파일(.exe) 형식으로 제공됩니다. 다운로드 후 바로 실행하여 사용할 수 있습니다.
 
             ### 📌 주요 기능
-            - 설정된 시간에 알람을 트리거합니다.
-            - 마크다운 기반의 알람 내용을 확인할 수 있습니다.
+            - 설정된 시간에 맞춰 정확하게 알람을 트리거합니다.
+            - 마크다운으로 작성된 상세한 알람 내용을 확인할 수 있습니다.
           draft: false
           prerelease: false
