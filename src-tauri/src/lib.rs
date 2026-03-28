@@ -2,10 +2,46 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct AlarmData {
     pub title: String,
     pub content: String,
+}
+
+pub fn parse_alarm_title(json_str: &str, alarm_id: &str) -> Option<String> {
+    let mut default_title = None;
+    if let Ok(items) = serde_json::from_str::<Vec<serde_json::Value>>(json_str) {
+        for item in items {
+            if let Some(obj) = item.as_object() {
+                if let Some(t) = obj.get("title").and_then(|v| v.as_str()) {
+                    if let Some(id_val) = obj.get("id") {
+                        let id_str = if let Some(s) = id_val.as_str() {
+                            Some(s.to_string())
+                        } else if let Some(n) = id_val.as_number() {
+                            Some(n.to_string())
+                        } else {
+                            None
+                        };
+
+                        if let Some(id) = id_str {
+                            if id == alarm_id {
+                                return Some(t.to_string());
+                            }
+                        } else {
+                            if default_title.is_none() {
+                                default_title = Some(t.to_string());
+                            }
+                        }
+                    } else {
+                        if default_title.is_none() {
+                            default_title = Some(t.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    default_title
 }
 
 #[tauri::command]
@@ -34,37 +70,8 @@ fn get_alarm_data() -> AlarmData {
         // Read alarms.json
         let json_path = home_dir.join("alarms.json");
         if let Ok(json_str) = fs::read_to_string(&json_path) {
-            if let Ok(items) = serde_json::from_str::<Vec<serde_json::Value>>(&json_str) {
-                for item in items {
-                    if let Some(obj) = item.as_object() {
-                        if let Some(t) = obj.get("title").and_then(|v| v.as_str()) {
-                            if let Some(id_val) = obj.get("id") {
-                                let id_str = if let Some(s) = id_val.as_str() {
-                                    Some(s.to_string())
-                                } else if let Some(n) = id_val.as_number() {
-                                    Some(n.to_string())
-                                } else {
-                                    None
-                                };
-
-                                if let Some(id) = id_str {
-                                    if id == alarm_id {
-                                        title = t.to_string();
-                                        break;
-                                    }
-                                } else {
-                                    if title == "제목없음" {
-                                        title = t.to_string();
-                                    }
-                                }
-                            } else {
-                                if title == "제목없음" {
-                                    title = t.to_string();
-                                }
-                            }
-                        }
-                    }
-                }
+            if let Some(t) = parse_alarm_title(&json_str, &alarm_id) {
+                title = t;
             }
         }
 
@@ -87,4 +94,43 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![get_alarm_data, close_app])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_alarm_title_found_string_id() {
+        let json_str = r#"[
+            {"id": "123", "title": "Test Title 1"},
+            {"id": "456", "title": "Test Title 2"}
+        ]"#;
+        assert_eq!(parse_alarm_title(json_str, "456"), Some("Test Title 2".to_string()));
+    }
+
+    #[test]
+    fn test_parse_alarm_title_found_number_id() {
+        let json_str = r#"[
+            {"id": 123, "title": "Test Title 1"},
+            {"id": 456, "title": "Test Title 2"}
+        ]"#;
+        assert_eq!(parse_alarm_title(json_str, "456"), Some("Test Title 2".to_string()));
+    }
+
+    #[test]
+    fn test_parse_alarm_title_not_found_returns_first_without_id_or_invalid_id() {
+        let json_str = r#"[
+            {"id": "123", "title": "Test Title 1"},
+            {"title": "Default Title"},
+            {"id": "789", "title": "Test Title 3"}
+        ]"#;
+        assert_eq!(parse_alarm_title(json_str, "999"), Some("Default Title".to_string()));
+    }
+
+    #[test]
+    fn test_parse_alarm_title_empty_json() {
+        let json_str = r#"[]"#;
+        assert_eq!(parse_alarm_title(json_str, "123"), None);
+    }
 }
