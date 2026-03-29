@@ -49,6 +49,7 @@ jobs:
         with:
           tag_name: ${{ inputs.version || github.ref_name }}
           files: src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger-standalone.exe
+          generate_release_notes: true
           body: |
             ## 🚀 alarm-trigger 프로그램 개요
 
