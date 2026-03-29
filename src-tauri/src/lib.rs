@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::fs;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct AlarmData {
@@ -50,7 +49,7 @@ fn close_app(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-fn get_alarm_data() -> AlarmData {
+async fn get_alarm_data() -> AlarmData {
     let mut alarm_id = String::new();
     let args: Vec<String> = env::args().collect();
     // Find the first argument that is not the executable path and doesn't start with '--'
@@ -69,7 +68,7 @@ fn get_alarm_data() -> AlarmData {
 
         // Read alarms.json
         let json_path = home_dir.join("alarms.json");
-        if let Ok(json_str) = fs::read_to_string(&json_path) {
+        if let Ok(json_str) = tokio::fs::read_to_string(&json_path).await {
             if let Some(t) = parse_alarm_title(&json_str, &alarm_id) {
                 title = t;
             }
@@ -78,7 +77,7 @@ fn get_alarm_data() -> AlarmData {
         // Read alarm_id.md
         if !alarm_id.is_empty() {
             let md_path = home_dir.join(format!("{}.md", alarm_id));
-            if let Ok(md_str) = fs::read_to_string(&md_path) {
+            if let Ok(md_str) = tokio::fs::read_to_string(&md_path).await {
                 content = md_str;
             }
         }
