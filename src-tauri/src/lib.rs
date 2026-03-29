@@ -79,7 +79,7 @@ async fn get_alarm_data() -> AlarmData {
         }
 
         // Read alarm_id.md
-        if !alarm_id.is_empty() {
+        if !alarm_id.is_empty() && is_safe_filename(&alarm_id) {
             let md_path = home_dir.join(format!("{}.md", alarm_id));
             if let Ok(md_str) = tokio::fs::read_to_string(&md_path).await {
                 content = md_str;
@@ -88,6 +88,13 @@ async fn get_alarm_data() -> AlarmData {
     }
 
     AlarmData { title, content }
+}
+
+fn is_safe_filename(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -109,7 +116,10 @@ mod tests {
             {"id": "123", "title": "Test Title 1"},
             {"id": "456", "title": "Test Title 2"}
         ]"#;
-        assert_eq!(parse_alarm_title(json_str, "456"), Some("Test Title 2".to_string()));
+        assert_eq!(
+            parse_alarm_title(json_str, "456"),
+            Some("Test Title 2".to_string())
+        );
     }
 
     #[test]
@@ -118,7 +128,10 @@ mod tests {
             {"id": 123, "title": "Test Title 1"},
             {"id": 456, "title": "Test Title 2"}
         ]"#;
-        assert_eq!(parse_alarm_title(json_str, "456"), Some("Test Title 2".to_string()));
+        assert_eq!(
+            parse_alarm_title(json_str, "456"),
+            Some("Test Title 2".to_string())
+        );
     }
 
     #[test]
@@ -128,7 +141,10 @@ mod tests {
             {"title": "Default Title"},
             {"id": "789", "title": "Test Title 3"}
         ]"#;
-        assert_eq!(parse_alarm_title(json_str, "999"), Some("Default Title".to_string()));
+        assert_eq!(
+            parse_alarm_title(json_str, "999"),
+            Some("Default Title".to_string())
+        );
     }
 
     #[test]
@@ -137,6 +153,23 @@ mod tests {
         assert_eq!(parse_alarm_title(json_str, "123"), None);
     }
 
+    #[test]
+    fn test_is_safe_filename() {
+        assert!(is_safe_filename("valid_id-123"));
+        assert!(is_safe_filename("1234"));
+        assert!(is_safe_filename("abc_DEF-99"));
+
+        assert!(!is_safe_filename(""));
+        assert!(!is_safe_filename("../test"));
+        assert!(!is_safe_filename("test/bar"));
+        assert!(!is_safe_filename("test\\bar"));
+        assert!(!is_safe_filename("."));
+        assert!(!is_safe_filename(".."));
+        assert!(!is_safe_filename("test.md"));
+        assert!(!is_safe_filename("test..md"));
+        assert!(!is_safe_filename("test\0"));
+    }
+  
     #[test]
     fn test_parse_alarm_title_invalid_json() {
         let json_str = r#"{"invalid": json}"#;
