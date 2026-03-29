@@ -7,34 +7,38 @@ pub struct AlarmData {
     pub content: String,
 }
 
+#[derive(Deserialize)]
+struct AlarmEntry {
+    id: Option<serde_json::Value>,
+    title: Option<String>,
+}
+
 pub fn parse_alarm_title(json_str: &str, alarm_id: &str) -> Option<String> {
     let mut default_title = None;
-    if let Ok(items) = serde_json::from_str::<Vec<serde_json::Value>>(json_str) {
+    if let Ok(items) = serde_json::from_str::<Vec<AlarmEntry>>(json_str) {
         for item in items {
-            if let Some(obj) = item.as_object() {
-                if let Some(t) = obj.get("title").and_then(|v| v.as_str()) {
-                    if let Some(id_val) = obj.get("id") {
-                        let id_str = if let Some(s) = id_val.as_str() {
-                            Some(s.to_string())
-                        } else if let Some(n) = id_val.as_number() {
-                            Some(n.to_string())
-                        } else {
-                            None
-                        };
+            if let Some(t) = item.title {
+                if let Some(id_val) = item.id {
+                    let id_str = if let Some(s) = id_val.as_str() {
+                        Some(s.to_string())
+                    } else if let Some(n) = id_val.as_number() {
+                        Some(n.to_string())
+                    } else {
+                        None
+                    };
 
-                        if let Some(id) = id_str {
-                            if id == alarm_id {
-                                return Some(t.to_string());
-                            }
-                        } else {
-                            if default_title.is_none() {
-                                default_title = Some(t.to_string());
-                            }
+                    if let Some(id) = id_str {
+                        if id == alarm_id {
+                            return Some(t);
                         }
                     } else {
                         if default_title.is_none() {
-                            default_title = Some(t.to_string());
+                            default_title = Some(t);
                         }
+                    }
+                } else {
+                    if default_title.is_none() {
+                        default_title = Some(t);
                     }
                 }
             }
