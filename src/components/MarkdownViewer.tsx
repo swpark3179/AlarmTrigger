@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
+import React, { useEffect, useRef, ComponentPropsWithoutRef } from 'react';
+import ReactMarkdown, { ExtraProps } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import mermaid from 'mermaid';
@@ -17,7 +17,8 @@ interface MarkdownViewerProps {
 const remarkPlugins = [remarkGfm];
 const rehypePlugins = [rehypeRaw];
 const components = {
-  code({ node, inline, className, children, ...props }: any) {
+  code({ node, inline, className, children, ...props }:
+  ComponentPropsWithoutRef<'code'> & ExtraProps & { inline?: boolean }) {
     const match = /language-(\w+)/.exec(className || '');
     const isMermaid = match && match[1] === 'mermaid';
 
