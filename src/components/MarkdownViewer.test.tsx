@@ -31,4 +31,28 @@ describe('MarkdownViewer', () => {
       expect(wrapper).toBeInTheDocument();
     });
   });
+
+  it('handles mermaid render errors gracefully', async () => {
+    const content = '```mermaid\ninvalid graph\n```';
+    const mockError = new Error('Invalid mermaid syntax');
+
+    // Spy on console.error to suppress the error output in test logs and verify it was called
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Mock mermaid.render to throw an error synchronously for this test only
+    const mermaid = await import('mermaid');
+    const renderSpy = vi.spyOn(mermaid.default, 'render').mockImplementationOnce(() => {
+      throw mockError;
+    });
+
+    render(<MarkdownViewer content={content} />);
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Mermaid render error', mockError);
+    });
+
+    // Cleanup
+    consoleErrorSpy.mockRestore();
+    renderSpy.mockRestore();
+  });
 });
