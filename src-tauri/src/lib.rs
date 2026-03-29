@@ -133,4 +133,10 @@ mod tests {
         let json_str = r#"[]"#;
         assert_eq!(parse_alarm_title(json_str, "123"), None);
     }
+
+    #[test]
+    fn test_parse_alarm_title_invalid_json() {
+        let json_str = r#"{"invalid": json}"#;
+        assert_eq!(parse_alarm_title(json_str, "123"), None);
+    }
 }
