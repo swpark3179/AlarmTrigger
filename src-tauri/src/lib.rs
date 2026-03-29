@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::fs;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct AlarmData {
@@ -8,34 +7,38 @@ pub struct AlarmData {
     pub content: String,
 }
 
+#[derive(Deserialize)]
+struct AlarmEntry {
+    id: Option<serde_json::Value>,
+    title: Option<String>,
+}
+
 pub fn parse_alarm_title(json_str: &str, alarm_id: &str) -> Option<String> {
     let mut default_title = None;
-    if let Ok(items) = serde_json::from_str::<Vec<serde_json::Value>>(json_str) {
+    if let Ok(items) = serde_json::from_str::<Vec<AlarmEntry>>(json_str) {
         for item in items {
-            if let Some(obj) = item.as_object() {
-                if let Some(t) = obj.get("title").and_then(|v| v.as_str()) {
-                    if let Some(id_val) = obj.get("id") {
-                        let id_str = if let Some(s) = id_val.as_str() {
-                            Some(s.to_string())
-                        } else if let Some(n) = id_val.as_number() {
-                            Some(n.to_string())
-                        } else {
-                            None
-                        };
+            if let Some(t) = item.title {
+                if let Some(id_val) = item.id {
+                    let id_str = if let Some(s) = id_val.as_str() {
+                        Some(s.to_string())
+                    } else if let Some(n) = id_val.as_number() {
+                        Some(n.to_string())
+                    } else {
+                        None
+                    };
 
-                        if let Some(id) = id_str {
-                            if id == alarm_id {
-                                return Some(t.to_string());
-                            }
-                        } else {
-                            if default_title.is_none() {
-                                default_title = Some(t.to_string());
-                            }
+                    if let Some(id) = id_str {
+                        if id == alarm_id {
+                            return Some(t);
                         }
                     } else {
                         if default_title.is_none() {
-                            default_title = Some(t.to_string());
+                            default_title = Some(t);
                         }
+                    }
+                } else {
+                    if default_title.is_none() {
+                        default_title = Some(t);
                     }
                 }
             }
@@ -50,7 +53,7 @@ fn close_app(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-fn get_alarm_data() -> AlarmData {
+async fn get_alarm_data() -> AlarmData {
     let mut alarm_id = String::new();
     let args: Vec<String> = env::args().collect();
     // Find the first argument that is not the executable path and doesn't start with '--'
@@ -69,22 +72,29 @@ fn get_alarm_data() -> AlarmData {
 
         // Read alarms.json
         let json_path = home_dir.join("alarms.json");
-        if let Ok(json_str) = fs::read_to_string(&json_path) {
+        if let Ok(json_str) = tokio::fs::read_to_string(&json_path).await {
             if let Some(t) = parse_alarm_title(&json_str, &alarm_id) {
                 title = t;
             }
         }
 
         // Read alarm_id.md
-        if !alarm_id.is_empty() {
+        if !alarm_id.is_empty() && is_safe_filename(&alarm_id) {
             let md_path = home_dir.join(format!("{}.md", alarm_id));
-            if let Ok(md_str) = fs::read_to_string(&md_path) {
+            if let Ok(md_str) = tokio::fs::read_to_string(&md_path).await {
                 content = md_str;
             }
         }
     }
 
     AlarmData { title, content }
+}
+
+fn is_safe_filename(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -106,7 +116,10 @@ mod tests {
             {"id": "123", "title": "Test Title 1"},
             {"id": "456", "title": "Test Title 2"}
         ]"#;
-        assert_eq!(parse_alarm_title(json_str, "456"), Some("Test Title 2".to_string()));
+        assert_eq!(
+            parse_alarm_title(json_str, "456"),
+            Some("Test Title 2".to_string())
+        );
     }
 
     #[test]
@@ -115,7 +128,10 @@ mod tests {
             {"id": 123, "title": "Test Title 1"},
             {"id": 456, "title": "Test Title 2"}
         ]"#;
-        assert_eq!(parse_alarm_title(json_str, "456"), Some("Test Title 2".to_string()));
+        assert_eq!(
+            parse_alarm_title(json_str, "456"),
+            Some("Test Title 2".to_string())
+        );
     }
 
     #[test]
@@ -125,12 +141,38 @@ mod tests {
             {"title": "Default Title"},
             {"id": "789", "title": "Test Title 3"}
         ]"#;
-        assert_eq!(parse_alarm_title(json_str, "999"), Some("Default Title".to_string()));
+        assert_eq!(
+            parse_alarm_title(json_str, "999"),
+            Some("Default Title".to_string())
+        );
     }
 
     #[test]
     fn test_parse_alarm_title_empty_json() {
         let json_str = r#"[]"#;
+        assert_eq!(parse_alarm_title(json_str, "123"), None);
+    }
+
+    #[test]
+    fn test_is_safe_filename() {
+        assert!(is_safe_filename("valid_id-123"));
+        assert!(is_safe_filename("1234"));
+        assert!(is_safe_filename("abc_DEF-99"));
+
+        assert!(!is_safe_filename(""));
+        assert!(!is_safe_filename("../test"));
+        assert!(!is_safe_filename("test/bar"));
+        assert!(!is_safe_filename("test\\bar"));
+        assert!(!is_safe_filename("."));
+        assert!(!is_safe_filename(".."));
+        assert!(!is_safe_filename("test.md"));
+        assert!(!is_safe_filename("test..md"));
+        assert!(!is_safe_filename("test\0"));
+    }
+  
+    #[test]
+    fn test_parse_alarm_title_invalid_json() {
+        let json_str = r#"{"invalid": json}"#;
         assert_eq!(parse_alarm_title(json_str, "123"), None);
     }
 }
