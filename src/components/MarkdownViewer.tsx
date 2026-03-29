@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -14,32 +14,51 @@ interface MarkdownViewerProps {
   content: string;
 }
 
-const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+const MermaidChart: React.FC<{ chart: string }> = ({ chart }) => {
+  const [svgContent, setSvgContent] = React.useState<string>('');
 
-  useEffect(() => {
-    if (containerRef.current) {
-      mermaid.contentLoaded();
-      // Find all elements with class 'mermaid' and render them if not already rendered
-      const mermaidNodes = containerRef.current.querySelectorAll('.mermaid');
-      mermaidNodes.forEach((node, idx) => {
-        if (node.getAttribute('data-processed')) return;
-        const id = `mermaid-${Date.now()}-${idx}`;
-        const graphDefinition = node.textContent || '';
-        try {
-          mermaid.render(id, graphDefinition).then(({ svg }) => {
-            node.innerHTML = svg;
-            node.setAttribute('data-processed', 'true');
-          });
-        } catch (error) {
-          console.error('Mermaid render error', error);
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const renderChart = async () => {
+      try {
+        const id = `mermaid-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        const { svg } = await mermaid.render(id, chart);
+        if (isMounted) {
+          setSvgContent(svg);
         }
-      });
-    }
-  }, [content]);
+      } catch (error) {
+        console.error('Mermaid render error', error);
+      }
+    };
+
+    renderChart();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [chart]);
 
   return (
-    <div ref={containerRef} className="markdown-body">
+    <div className="mermaid-wrapper">
+      {svgContent ? (
+        <div
+          className="mermaid"
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+          data-processed="true"
+        />
+      ) : (
+        <div className="mermaid" data-processed="false">
+          {chart}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
+  return (
+    <div className="markdown-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
@@ -49,11 +68,7 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
             const isMermaid = match && match[1] === 'mermaid';
 
             if (isMermaid) {
-              return (
-                <div className="mermaid-wrapper">
-                  <div className="mermaid">{String(children).replace(/\n$/, '')}</div>
-                </div>
-              );
+              return <MermaidChart chart={String(children).replace(/\n$/, '')} />;
             }
 
             return !inline ? (
