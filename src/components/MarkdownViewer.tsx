@@ -3,11 +3,12 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import mermaid from 'mermaid';
+import DOMPurify from 'dompurify';
 
 mermaid.initialize({
   startOnLoad: false,
   theme: 'default',
-  securityLevel: 'loose',
+  securityLevel: 'strict',
 });
 
 interface MarkdownViewerProps {
@@ -28,7 +29,7 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
         const graphDefinition = node.textContent || '';
         try {
           mermaid.render(id, graphDefinition).then(({ svg }) => {
-            node.innerHTML = svg;
+            node.innerHTML = DOMPurify.sanitize(svg);
             node.setAttribute('data-processed', 'true');
           });
         } catch (error) {
