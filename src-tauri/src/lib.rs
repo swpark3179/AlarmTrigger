@@ -13,6 +13,37 @@ struct AlarmEntry {
     title: Option<String>,
 }
 
+pub fn disable_one_off_alarm(json_str: &str, alarm_id: &str) -> Option<String> {
+    let mut modified = false;
+    if let Ok(mut items) = serde_json::from_str::<Vec<serde_json::Value>>(json_str) {
+        for item in &mut items {
+            if let Some(obj) = item.as_object_mut() {
+                let is_match = obj.get("id").and_then(|v| {
+                    if let Some(s) = v.as_str() {
+                        Some(s == alarm_id)
+                    } else if let Some(n) = v.as_number() {
+                        Some(n.to_string() == alarm_id)
+                    } else {
+                        None
+                    }
+                }).unwrap_or(false);
+
+                if is_match {
+                    let is_one_off = obj.get("repeat_type").map_or(false, |v| v.as_str() == Some("None") || v.is_null());
+                    if is_one_off {
+                        obj.insert("enabled".to_string(), serde_json::Value::Bool(false));
+                        modified = true;
+                    }
+                }
+            }
+        }
+        if modified {
+            return serde_json::to_string_pretty(&items).ok();
+        }
+    }
+    None
+}
+
 pub fn parse_alarm_title(json_str: &str, alarm_id: &str) -> Option<String> {
     let mut default_title = None;
     if let Ok(items) = serde_json::from_str::<Vec<AlarmEntry>>(json_str) {
@@ -75,6 +106,11 @@ async fn get_alarm_data() -> AlarmData {
         if let Ok(json_str) = tokio::fs::read_to_string(&json_path).await {
             if let Some(t) = parse_alarm_title(&json_str, &alarm_id) {
                 title = t;
+            }
+            if !alarm_id.is_empty() {
+                if let Some(updated_json) = disable_one_off_alarm(&json_str, &alarm_id) {
+                    let _ = tokio::fs::write(&json_path, updated_json).await;
+                }
             }
         }
 
@@ -174,5 +210,48 @@ mod tests {
     fn test_parse_alarm_title_invalid_json() {
         let json_str = r#"{"invalid": json}"#;
         assert_eq!(parse_alarm_title(json_str, "123"), None);
+    }
+
+    #[test]
+    fn test_disable_one_off_alarm_modifies() {
+        let json_str = r#"[
+            {"id": "123", "title": "Test Title 1", "repeat_type": "None", "enabled": true},
+            {"id": "456", "title": "Test Title 2", "repeat_type": "None", "enabled": true}
+        ]"#;
+
+        let result = disable_one_off_alarm(json_str, "456");
+        assert!(result.is_some());
+
+        let updated_json = result.unwrap();
+        let items: Vec<serde_json::Value> = serde_json::from_str(&updated_json).unwrap();
+
+        assert_eq!(items[0].get("enabled").unwrap().as_bool(), Some(true));
+        assert_eq!(items[1].get("enabled").unwrap().as_bool(), Some(false));
+    }
+
+    #[test]
+    fn test_disable_one_off_alarm_ignores() {
+        let json_str = r#"[
+            {"id": "123", "title": "Test Title 1", "repeat_type": "Daily", "enabled": true},
+            {"id": "456", "title": "Test Title 2", "repeat_type": "Daily", "enabled": true}
+        ]"#;
+
+        let result = disable_one_off_alarm(json_str, "456");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_disable_one_off_alarm_null_repeat_type() {
+        let json_str = r#"[
+            {"id": "123", "title": "Test Title 1", "repeat_type": null, "enabled": true}
+        ]"#;
+
+        let result = disable_one_off_alarm(json_str, "123");
+        assert!(result.is_some());
+
+        let updated_json = result.unwrap();
+        let items: Vec<serde_json::Value> = serde_json::from_str(&updated_json).unwrap();
+
+        assert_eq!(items[0].get("enabled").unwrap().as_bool(), Some(false));
     }
 }
