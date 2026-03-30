@@ -68,9 +68,27 @@ describe('App', () => {
       expect(screen.getByText('제목')).toBeInTheDocument();
     });
 
-    const closeBtn = screen.getByRole('button', { name: '확인' });
+    const closeBtn = screen.getByRole('button', { name: '확인 (Esc 눌러서 닫기)' });
     const user = userEvent.setup();
     await user.click(closeBtn);
+
+    expect(tauriApi.invoke).toHaveBeenCalledWith('close_app');
+  });
+
+  it('calls close_app when Escape key is pressed', async () => {
+    vi.mocked(tauriApi.invoke).mockResolvedValueOnce({
+      title: '제목',
+      content: '내용',
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('제목')).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup();
+    await user.keyboard('{Escape}');
 
     expect(tauriApi.invoke).toHaveBeenCalledWith('close_app');
   });
