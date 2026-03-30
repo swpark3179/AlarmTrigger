@@ -46,7 +46,7 @@ function App() {
       </div>
 
       <footer className="footer">
-        <button className="confirm-btn" onClick={handleClose}>
+        <button className="confirm-btn" onClick={handleClose} autoFocus>
           확인
         </button>
       </footer>
