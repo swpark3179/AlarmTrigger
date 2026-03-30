@@ -34,6 +34,7 @@ pub fn disable_one_off_alarm(json_str: &str, alarm_id: &str) -> Option<String> {
                         obj.insert("enabled".to_string(), serde_json::Value::Bool(false));
                         modified = true;
                     }
+                    break;
                 }
             }
         }
