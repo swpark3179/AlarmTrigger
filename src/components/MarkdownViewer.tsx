@@ -14,6 +14,8 @@ interface MarkdownViewerProps {
   content: string;
 }
 
+const mermaidCache = new Map<string, string>();
+
 const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   const [svgContent, setSvgContent] = useState<string>('');
 
@@ -22,8 +24,15 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
 
     const renderChart = async () => {
       try {
+        if (mermaidCache.has(chart)) {
+          setSvgContent(mermaidCache.get(chart)!);
+          return;
+        }
+
         const id = `mermaid-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         const { svg } = await mermaid.render(id, chart);
+        mermaidCache.set(chart, svg);
+
         if (isMounted) {
           setSvgContent(svg);
         }
