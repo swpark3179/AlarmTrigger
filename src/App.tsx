@@ -24,6 +24,16 @@ function App() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        await invoke("close_app");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleClose = async () => {
     await invoke("close_app");
   };
@@ -46,8 +56,23 @@ function App() {
       </div>
 
       <footer className="footer">
-        <button className="confirm-btn" onClick={handleClose} autoFocus>
+        <button
+          className="confirm-btn"
+          onClick={handleClose}
+          autoFocus
+          aria-label="확인 (Esc 눌러서 닫기)"
+          style={{ display: "flex", alignItems: "center", gap: "8px" }}
+        >
           확인
+          <kbd style={{
+            fontSize: "0.75rem",
+            background: "var(--nord3)",
+            color: "var(--nord6)",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            boxShadow: "inset 0 -1px 0 rgba(0,0,0,0.2)"
+          }}>Esc</kbd>
         </button>
       </footer>
     </main>
