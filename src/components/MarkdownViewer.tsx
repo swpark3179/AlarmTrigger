@@ -49,7 +49,12 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   }, [chart]);
 
   return (
-    <div className="mermaid-wrapper">
+    <div
+      className="mermaid-wrapper"
+      role="figure"
+      aria-label="다이어그램"
+      aria-busy={!svgContent}
+    >
       {svgContent ? (
         <div
           className="mermaid"

@@ -47,6 +47,7 @@ function App() {
         tabIndex={0}
         role="region"
         aria-label="알람 내용"
+        aria-busy={!data}
       >
         {data ? (
           <MarkdownViewer content={data.content || "표시할 내용이 없습니다."} />

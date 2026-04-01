@@ -5,3 +5,7 @@
 ## 2024-10-24 - Esc key shortcut for modal/dialog closing
 **Learning:** Adding a keyboard shortcut (like `Esc`) to close an application or dialog significantly improves keyboard accessibility and power-user experience. However, when displaying a visual hint for the shortcut (e.g., `<kbd>Esc</kbd>`), it is crucial to update the `aria-label` on the corresponding interactive element (e.g., the Confirm button) to explicitly mention the shortcut (e.g., "확인 (Esc 눌러서 닫기)") so screen reader users are equally informed. Also, when writing the `useEffect` listener for the shortcut, any dependencies used inside the callback (like `handleClose` or Tauri's `invoke`) must be carefully managed to avoid stale closures or ESLint `react-hooks/exhaustive-deps` warnings; moving the `invoke` directly into the effect is often a cleaner pattern.
 **Action:** When adding keyboard shortcuts for a specific action, always pair it with an updated `aria-label` on the primary button for that action, and ensure hook dependencies are perfectly clean.
+
+## 2024-10-25 - Informing Screen Readers of Async Diagram Rendering
+**Learning:** When generating complex SVG diagrams asynchronously (like Mermaid charts), wrapping the container with `role="figure"`, `aria-label`, and toggling `aria-busy` ensures screen readers announce the diagram's presence and loading state, preventing them from attempting to read raw SVG text.
+**Action:** Always apply `role="figure"` and an `aria-label` to asynchronously rendered SVG wrappers, and use `aria-busy` to indicate loading.
