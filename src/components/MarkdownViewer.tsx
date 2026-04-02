@@ -29,7 +29,7 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
           return;
         }
 
-        const id = `mermaid-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        const id = `mermaid-${Date.now()}-${crypto.randomUUID()}`;
         const { svg } = await mermaid.render(id, chart);
         mermaidCache.set(chart, svg);
 
@@ -49,7 +49,7 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   }, [chart]);
 
   return (
-    <div className="mermaid-wrapper">
+    <div className="mermaid-wrapper" role="figure" aria-label="다이어그램" aria-busy={!svgContent}>
       {svgContent ? (
         <div
           className="mermaid"
@@ -57,7 +57,7 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
           data-processed="true"
         />
       ) : (
-        <div className="mermaid" data-processed="false">
+        <div className="mermaid" data-processed="false" aria-hidden="true">
           {chart}
         </div>
       )}
