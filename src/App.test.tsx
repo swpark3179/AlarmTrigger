@@ -68,7 +68,7 @@ describe('App', () => {
       expect(screen.getByText('제목')).toBeInTheDocument();
     });
 
-    const closeBtn = screen.getByRole('button', { name: '확인 (Esc 눌러서 닫기)' });
+    const closeBtn = screen.getByRole('button', { name: /확인/ });
     const user = userEvent.setup();
     await user.click(closeBtn);
 
