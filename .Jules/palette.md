@@ -9,3 +9,6 @@
 ## 2024-11-20 - Accessible loading states for Mermaid diagrams
 **Learning:** When asynchronously generating complex components like Mermaid diagrams, intermediate loading states (showing raw chart code) can confuse screen readers. Additionally, replacing weak pseudo-random id generation (`Math.random()`) with `crypto.randomUUID()` ensures robust collision-free execution for tools like mermaid renderer.
 **Action:** Always wrap dynamically rendered async diagram containers with `role="figure"`, an appropriate `aria-label`, and `aria-busy={!loaded}`. Most importantly, apply `aria-hidden="true"` to the raw code fallback during loading to ensure screen readers do not announce the unparsed syntax.
+## 2024-05-18 - [Tauri App Asynchronous UI States]
+**Learning:** Desktop application users expect immediate visual feedback when triggering system actions (like closing an app window). A lack of visual state change when clicking "Confirm" creates ambiguity about whether the action was registered, especially when Tauri IPC commands have slight asynchronous delays.
+**Action:** When implementing desktop app interactions involving IPC, always provide intermediate loading states (e.g., changing button text to "닫는 중..." and disabling the button) to prevent duplicate actions and assure the user the system is responding.
