@@ -12,3 +12,7 @@
 ## 2024-05-18 - [Tauri App Asynchronous UI States]
 **Learning:** Desktop application users expect immediate visual feedback when triggering system actions (like closing an app window). A lack of visual state change when clicking "Confirm" creates ambiguity about whether the action was registered, especially when Tauri IPC commands have slight asynchronous delays.
 **Action:** When implementing desktop app interactions involving IPC, always provide intermediate loading states (e.g., changing button text to "닫는 중..." and disabling the button) to prevent duplicate actions and assure the user the system is responding.
+
+## 2024-04-04 - External Link UX Enhancement
+**Learning:** Found that `<ReactMarkdown>` intercepts link rendering but standard Markdown links in desktop apps (like Tauri) can inadvertently replace the UI content with external sites without a way back. Users might get stuck. By providing explicit `target="_blank"` and visual hints via `lucide-react` icons and `:focus-visible`, we prevent navigation traps and improve accessibility.
+**Action:** When adding links in desktop contexts, intercept them to ensure they break out safely.

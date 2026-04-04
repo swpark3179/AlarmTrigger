@@ -1,5 +1,6 @@
 import React, { useEffect, useState, ComponentPropsWithoutRef } from 'react';
 import ReactMarkdown, { ExtraProps } from 'react-markdown';
+import { ExternalLink } from 'lucide-react';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import mermaid from 'mermaid';
@@ -68,6 +69,20 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
 const remarkPlugins = [remarkGfm];
 const rehypePlugins = [rehypeRaw];
 const components = {
+  a({ node, ...props }: ComponentPropsWithoutRef<'a'> & ExtraProps) {
+    return (
+      <a
+        {...props}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="새 창에서 열기"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', ...(props.style || {}) }}
+      >
+        {props.children}
+        <ExternalLink size={12} aria-hidden="true" />
+      </a>
+    );
+  },
   code({ node, inline, className, children, ...props }:
   ComponentPropsWithoutRef<'code'> & ExtraProps & { inline?: boolean }) {
     const match = /language-(\w+)/.exec(className || '');
