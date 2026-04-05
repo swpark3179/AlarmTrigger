@@ -50,7 +50,7 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   }, [chart]);
 
   return (
-    <div className="mermaid-wrapper" role="figure" aria-label="다이어그램" aria-busy={!svgContent}>
+    <div className="mermaid-wrapper" role="figure" aria-label="다이어그램" aria-busy={!svgContent} tabIndex={0}>
       {svgContent ? (
         <div
           className="mermaid"
@@ -93,7 +93,7 @@ const components = {
     }
 
     return !inline ? (
-      <pre>
+      <pre tabIndex={0} role="region" aria-label="코드 블록">
         <code className={className} {...props}>
           {children}
         </code>
