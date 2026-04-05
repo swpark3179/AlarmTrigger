@@ -16,3 +16,7 @@
 ## 2024-04-04 - External Link UX Enhancement
 **Learning:** Found that `<ReactMarkdown>` intercepts link rendering but standard Markdown links in desktop apps (like Tauri) can inadvertently replace the UI content with external sites without a way back. Users might get stuck. By providing explicit `target="_blank"` and visual hints via `lucide-react` icons and `:focus-visible`, we prevent navigation traps and improve accessibility.
 **Action:** When adding links in desktop contexts, intercept them to ensure they break out safely.
+
+## 2024-11-25 - Scrollable content containers accessibility
+**Learning:** Any HTML element that is styled to be horizontally or vertically scrollable (like `<pre>` code blocks or `.mermaid-wrapper` using `overflow: auto`) must have `tabIndex={0}` if its content can exceed the viewport. Otherwise, keyboard-only users have no way to focus the container and scroll the content using arrow keys.
+**Action:** When creating components that can contain wide content (like Markdown viewers, code blocks, or data tables) with `overflow-x: auto`, always add `tabIndex={0}`, an appropriate `role` (like `region` or `figure`), an `aria-label`, and clear `:focus-visible` styles to ensure it can be scrolled by keyboard navigation.
