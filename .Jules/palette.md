@@ -20,3 +20,7 @@
 ## 2024-11-25 - Scrollable content containers accessibility
 **Learning:** Any HTML element that is styled to be horizontally or vertically scrollable (like `<pre>` code blocks or `.mermaid-wrapper` using `overflow: auto`) must have `tabIndex={0}` if its content can exceed the viewport. Otherwise, keyboard-only users have no way to focus the container and scroll the content using arrow keys.
 **Action:** When creating components that can contain wide content (like Markdown viewers, code blocks, or data tables) with `overflow-x: auto`, always add `tabIndex={0}`, an appropriate `role` (like `region` or `figure`), an `aria-label`, and clear `:focus-visible` styles to ensure it can be scrolled by keyboard navigation.
+
+## 2024-11-25 - Scrollable Markdown Tables and Responsive Images
+**Learning:** When rendering user-generated Markdown containing tables and images in a constrained desktop window, the layout can easily break if the content overflows. Tables need to be wrapped in a horizontally scrollable container, and images must not exceed the viewport width. Furthermore, scrollable containers must be accessible.
+**Action:** Always wrap tables in a horizontally scrollable container (e.g., `<div class="table-wrapper">`) with `tabIndex={0}` and `role="region"` for a11y, and apply `max-width: 100%` and `height: auto` to images to prevent the content from overflowing and breaking the layout.
