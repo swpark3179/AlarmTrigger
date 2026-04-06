@@ -104,6 +104,23 @@ const components = {
       </code>
     );
   },
+  table({ node, ...props }: ComponentPropsWithoutRef<'table'> & ExtraProps) {
+    return (
+      <div className="table-wrapper" tabIndex={0} role="region" aria-label="표">
+        <table {...props} />
+      </div>
+    );
+  },
+  img({ node, alt, ...props }: ComponentPropsWithoutRef<'img'> & ExtraProps) {
+    return (
+      <img
+        {...props}
+        alt={alt || '이미지'}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  },
 };
 
 const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
