@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ComponentPropsWithoutRef } from 'react';
 import ReactMarkdown, { ExtraProps } from 'react-markdown';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Copy, Check } from 'lucide-react';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import mermaid from 'mermaid';
@@ -66,6 +66,57 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   );
 };
 
+const CodeBlock: React.FC<{ children: React.ReactNode; className?: string } & ComponentPropsWithoutRef<'code'>> = ({ children, className, ...props }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <pre tabIndex={0} role="region" aria-label="코드 블록">
+        <code className={className} {...props}>
+          {children}
+        </code>
+      </pre>
+      <button
+        onClick={handleCopy}
+        aria-label={copied ? "복사 완료" : "코드 복사"}
+        title={copied ? "복사 완료" : "코드 복사"}
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          background: 'var(--nord3)',
+          color: 'var(--nord6)',
+          border: 'none',
+          borderRadius: '4px',
+          padding: '6px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: 0.8,
+          transition: 'opacity 0.2s',
+        }}
+        onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+        onMouseOut={(e) => (e.currentTarget.style.opacity = '0.8')}
+        onFocus={(e) => (e.currentTarget.style.opacity = '1')}
+        onBlur={(e) => (e.currentTarget.style.opacity = '0.8')}
+      >
+        {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+      </button>
+    </div>
+  );
+};
+
 const remarkPlugins = [remarkGfm];
 const rehypePlugins = [rehypeRaw];
 const components = {
@@ -93,11 +144,9 @@ const components = {
     }
 
     return !inline ? (
-      <pre tabIndex={0} role="region" aria-label="코드 블록">
-        <code className={className} {...props}>
-          {children}
-        </code>
-      </pre>
+      <CodeBlock className={className} {...props}>
+        {children}
+      </CodeBlock>
     ) : (
       <code className={className} {...props}>
         {children}
