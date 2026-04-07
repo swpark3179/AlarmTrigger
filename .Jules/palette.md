@@ -24,3 +24,7 @@
 ## 2024-11-25 - Scrollable Markdown Tables and Responsive Images
 **Learning:** When rendering user-generated Markdown containing tables and images in a constrained desktop window, the layout can easily break if the content overflows. Tables need to be wrapped in a horizontally scrollable container, and images must not exceed the viewport width. Furthermore, scrollable containers must be accessible.
 **Action:** Always wrap tables in a horizontally scrollable container (e.g., `<div class="table-wrapper">`) with `tabIndex={0}` and `role="region"` for a11y, and apply `max-width: 100%` and `height: auto` to images to prevent the content from overflowing and breaking the layout.
+
+## 2025-01-20 - Accessible Copy Buttons in Code Blocks
+**Learning:** Adding a "Copy to clipboard" button to scrollable code blocks (`<pre>`) is a high-impact micro-UX improvement for technical content. However, simply absolute-positioning the button requires setting `position: 'relative'` on a wrapper element. Crucially, the copy action must provide immediate visual and screen reader feedback without breaking the user's workflow. Dynamically changing the `aria-label` and `title` attributes (e.g., from "코드 복사" to "복사 완료"), alongside swapping the icon, ensures all users know the action succeeded.
+**Action:** When adding micro-interactions inside scrollable code or data areas, always wrap the area with a relative positioned container, provide an absolutely positioned accessible button, and ensure dynamic ARIA feedback on success states.
