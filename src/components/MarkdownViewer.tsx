@@ -87,31 +87,19 @@ const CodeBlock: React.FC<{ children: React.ReactNode; className?: string } & Co
         </code>
       </pre>
       <button
+        className="copy-btn"
         onClick={handleCopy}
         aria-label={copied ? "복사 완료" : "코드 복사"}
         title={copied ? "복사 완료" : "코드 복사"}
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          background: 'var(--nord3)',
-          color: 'var(--nord6)',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '6px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: 0.8,
-          transition: 'opacity 0.2s',
-        }}
-        onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
-        onMouseOut={(e) => (e.currentTarget.style.opacity = '0.8')}
-        onFocus={(e) => (e.currentTarget.style.opacity = '1')}
-        onBlur={(e) => (e.currentTarget.style.opacity = '0.8')}
       >
-        {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+        {copied ? (
+          <>
+            <Check size={16} aria-hidden="true" />
+            <span>복사됨</span>
+          </>
+        ) : (
+          <Copy size={16} aria-hidden="true" />
+        )}
       </button>
     </div>
   );
