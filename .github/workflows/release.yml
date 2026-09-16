@@ -15,7 +15,10 @@ jobs:
   release:
     permissions:
       contents: write
-    runs-on: ubuntu-latest
+    # WebView2 로더(WebView2LoaderStatic.lib)는 MSVC 타깃에서만 정적 링크된다.
+    # GNU(MinGW) 타깃으로 빌드하면 WebView2Loader.dll을 외부에서 찾게 되어
+    # 실행 시 "WebView2Loader.dll이(가) 없어 코드 실행을 진행할 수 없습니다" 오류가 발생한다.
+    runs-on: windows-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -26,31 +29,57 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libglib2.0-dev libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
-          sudo apt-get install -y mingw-w64 nsis
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-gnu
+          targets: x86_64-pc-windows-msvc
 
       - name: Install npm dependencies
         run: npm ci
 
       - name: Build Tauri app
-        run: npm run tauri build -- --target x86_64-pc-windows-gnu --no-bundle
+        run: npm run tauri build -- --target x86_64-pc-windows-msvc --no-bundle
+
+      - name: Verify standalone executable has no WebView2Loader.dll dependency
+        shell: pwsh
+        run: |
+          $exe = "src-tauri/target/x86_64-pc-windows-msvc/release/alarm-trigger.exe"
+          if (-not (Test-Path $exe)) { throw "빌드 산출물을 찾을 수 없습니다: $exe" }
+
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $dumpbin = $null
+          if (Test-Path $vswhere) {
+            $dumpbin = & $vswhere -latest -products * -find '**\Hostx64\x64\dumpbin.exe' | Select-Object -First 1
+          }
+          if (-not $dumpbin) {
+            Write-Warning "dumpbin.exe를 찾지 못해 의존성 검증을 건너뜁니다."
+            exit 0
+          }
+
+          $deps = & $dumpbin /nologo /dependents $exe 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "dumpbin 실행에 실패해 의존성 검증을 건너뜁니다."
+            exit 0
+          }
+
+          $deps | Write-Host
+          if ($deps -match 'WebView2Loader\.dll') {
+            throw "WebView2Loader.dll을 동적으로 참조합니다. MSVC 정적 링크가 적용되지 않았습니다."
+          }
+          Write-Host "WebView2Loader.dll 동적 의존성 없음 - 단일 실행 파일로 배포 가능합니다."
 
       - name: Rename executable
-        run: mv src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger.exe src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger-standalone.exe
+        shell: pwsh
+        run: |
+          Move-Item -Force `
+            src-tauri/target/x86_64-pc-windows-msvc/release/alarm-trigger.exe `
+            src-tauri/target/x86_64-pc-windows-msvc/release/alarm-trigger-standalone.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version || github.ref_name }}
-          files: src-tauri/target/x86_64-pc-windows-gnu/release/alarm-trigger-standalone.exe
+          files: src-tauri/target/x86_64-pc-windows-msvc/release/alarm-trigger-standalone.exe
           generate_release_notes: true
           body: |
             ## 🚀 alarm-trigger 프로그램 개요
@@ -62,5 +91,10 @@ jobs:
             ### 📌 주요 기능
             - 설정된 시간에 맞춰 정확하게 알람을 트리거합니다.
             - 마크다운으로 작성된 상세한 알람 내용을 확인할 수 있습니다.
+
+            ### 📥 사용 방법
+            1. 아래에서 `alarm-trigger-standalone.exe`를 내려받습니다.
+            2. 파일명을 **`Trigger.exe`** 로 변경합니다.
+            3. 자세한 설정과 실행 방법은 [README의 사용법](https://github.com/swpark3179/AlarmTrigger#사용법)을 참고하세요.
           draft: false
           prerelease: false
